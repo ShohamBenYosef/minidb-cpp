@@ -1,38 +1,42 @@
 # MiniDB
 
-MiniDB is a small C++ project I’m building to better understand how simple database systems work under the hood.
+MiniDB is a lightweight binary file-based database prototype written in C++.
 
-The idea is to implement a lightweight binary file-based storage system from scratch, while practicing lower-level C++ topics such as file I/O, binary serialization, record storage, indexing, and basic command-line interaction.
-
-This is mainly a learning project, but the goal is to gradually turn it into a cleaner and more structured mini database engine.
+The project is built as a learning-oriented systems programming project, focusing on low-level file I/O, binary serialization, record storage, indexing, modular design, and command-line interaction.
 
 ## Current Features
-- Stores fixed-size `User` records
-- Saves records to a binary file
-- Supports append-based insertion
-- Reads all stored records using a sequential scan
-- Finds a user by ID
-- Includes basic error handling for file operations
-- Menu-based insert, list, find, and clear operations
+
+- Fixed-size `User` records
+- Binary file persistence
+- Append-based record insertion
+- Sequential scan over stored records
+- Search user by ID
 - Interactive command-line interface
+- Menu-based insert, list, find, and clear operations
+- Basic error handling for file operations
+- `StorageEngine` class abstraction for file-based storage operations
 
 ## Planned Features
-- `StorageEngine` class to separate storage logic from the main program
-- In-memory hash index for faster user lookup
+
+- In-memory hash index for faster lookups
 - Basic query parser
-- Delete and update operations
+- Delete/update support
 - Unit tests
-- Benchmarks comparing linear search and indexed lookup
-- CMake build setup
+- Benchmarks for linear search vs indexed lookup
+- CMake build system
+- Improved input validation
 
 ## Tech Stack
+
 - C++
 - Binary file I/O
-- Git / GitHub
+- Object-oriented design
+- Git/GitHub
 - macOS development environment
 
 ## Build and Run
-At the moment, the project can be compiled directly with:
+
+Compile:
 
 ```bash
-g++ -std=c++17 -Wall -Wextra -pedantic main.cpp -o minidb
+g++ -std=c++17 -Wall -Wextra -pedantic main.cpp StorageEngine.cpp -o minidb
