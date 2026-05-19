@@ -55,6 +55,12 @@ int main() {
                 int age = readInt("Enter age: ");
 
                 User user = createUser(id, name, age);
+                User existingUser;
+                
+                if (storage.findUserById(id, existingUser)){ 
+                    std::cout << "Error: user with ID " << id << " is alredy exists." << std::endl;
+                    break;
+                }
 
                 if (storage.saveUser(user)) {
                     std::cout << "User inserted successfully.\n";
