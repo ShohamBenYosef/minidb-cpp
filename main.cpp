@@ -1,7 +1,26 @@
 #include <iostream>
 #include <string>
 #include "StorageEngine.hpp"
+#include <limits>
 
+
+int readInt(const std::string& prompt){
+    int value;
+
+    while (true) {
+        std::cout << prompt;
+        std::cin >> value;
+
+        if(std::cin) {
+            return value;
+        }
+
+        std::cout << "Invalid input." << std::endl;
+
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+}
 
 
 int main() {
@@ -15,10 +34,9 @@ int main() {
                   << "2. List all users\n"
                   << "3. Find user by id\n"
                   << "4. Clear database\n"
-                  << "0. Exit\n"
-                  << "Choose option: ";
+                  << "0. Exit\n";
 
-        std::cin >> choice;
+        choice = readInt("Choose option: ");
 
         switch (choice) {
             case 0: {
@@ -27,18 +45,14 @@ int main() {
             }
 
             case 1: {
-                int id;
                 std::string name;
-                int age;
 
-                std::cout << "Enter id: ";
-                std::cin >> id;
+                int id = readInt("Enter id: ");
 
                 std::cout << "Enter name: ";
                 std::cin >> name;
 
-                std::cout << "Enter age: ";
-                std::cin >> age;
+                int age = readInt("Enter age: ");
 
                 User user = createUser(id, name, age);
 
@@ -58,11 +72,9 @@ int main() {
             }
 
             case 3: {
-                int id;
                 User foundUser;
 
-                std::cout << "Enter id to search: ";
-                std::cin >> id;
+                int id = readInt("Enter id to search: ");
 
                 if (storage.findUserById(id, foundUser)) {
                     std::cout << "User found:\n";
