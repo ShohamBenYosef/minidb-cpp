@@ -17,6 +17,7 @@ public:
     explicit StorageEngine(const std::string& filename);
 
     bool saveUser(const User& user);
+    bool deleteUserById(int id);
     bool loadAllUsers() const;
     bool findUserById(int id, User& res) const;
     bool clear() const;
