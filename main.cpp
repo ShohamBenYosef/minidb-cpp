@@ -1,110 +1,11 @@
 #include <iostream>
-#include <cstring>
-#include <fstream>
 #include <string>
+#include "StorageEngine.hpp"
 
-struct User {
-    int id;
-    char name[32];
-    int age;
-};
-
-void printUser(const User& user) {
-    std::cout << "ID: " << user.id
-              << ", Name: " << user.name
-              << ", Age: " << user.age
-              << std::endl;
-}
-
-bool saveUserToFile(const User& user, const std::string& filename){
-    std::ofstream file(filename, std::ios::binary | std::ios::app);
-    
-    if (!file.is_open()) {
-        std::cerr << "Error: failed to open file: " << filename << std::endl;
-        return false;
-    }
-    
-    file.write(reinterpret_cast<const char*>(&user), sizeof(User));
-
-    if (!file) {
-        std::cerr << "Error: failed to write user to file." << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
-bool loadAllUsersFromFile(const std::string& filename) {
-    std::ifstream file(filename, std::ios::binary);
-
-    if (!file.is_open()) {
-        std::cerr << "Error: failed to open file: " << filename << std::endl;
-        return false;
-    }
-
-    User user;
-
-    while (file.read(reinterpret_cast<char*>(&user), sizeof(User))){
-        printUser(user);
-    }
-
-    if (!file.eof()) {
-        std::cerr << "Error: failed while reading from file." << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
-User createUser(int id, const std::string& name, int age){
-    User newUser;
-    newUser.id = id;
-    newUser.age = age;
-
-    strncpy(newUser.name, name.c_str(), sizeof(newUser.name) - 1);
-    newUser.name[sizeof(newUser.name) - 1] = '\0'; // make sure its end.
-
-    return newUser;
-}
-
-bool clearFile(const std::string& filename) {
-    std::ofstream file(filename, std::ios::binary | std::ios::trunc);
-
-    if (!file.is_open()) {
-        std::cerr << "Error: failed to clear file: " << filename << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
-bool findUserById(const std::string& filename, int id, User& res) {
-    std::ifstream file(filename, std::ios::binary);
-
-    if(!file.is_open()) {
-        std::cerr << "Error: failed to open file: " << filename << std::endl;
-        return false;
-    }
-
-    User currUser;
-
-    while (file.read(reinterpret_cast<char*>(&currUser), sizeof(User))){
-        if (currUser.id == id){
-            res = currUser;
-            return true;
-        }
-    }
-
-    if (!file.eof()) {
-        std::cerr << "Error: failed while reading from file." << std::endl;
-    }
-
-    return false;
-}
 
 
 int main() {
-    const std::string filename = "users.db";
+    StorageEngine storage("users.db");
 
     int choice = 0;
 
@@ -141,7 +42,7 @@ int main() {
 
                 User user = createUser(id, name, age);
 
-                if (saveUserToFile(user, filename)) {
+                if (storage.saveUser(user)) {
                     std::cout << "User inserted successfully.\n";
                 } else {
                     std::cout << "Failed to insert user.\n";
@@ -152,7 +53,7 @@ int main() {
 
             case 2: {
                 std::cout << "\nAll users:\n";
-                loadAllUsersFromFile(filename);
+                storage.loadAllUsers();
                 break;
             }
 
@@ -163,7 +64,7 @@ int main() {
                 std::cout << "Enter id to search: ";
                 std::cin >> id;
 
-                if (findUserById(filename, id, foundUser)) {
+                if (storage.findUserById(id, foundUser)) {
                     std::cout << "User found:\n";
                     printUser(foundUser);
                 } else {
@@ -174,7 +75,7 @@ int main() {
             }
 
             case 4: {
-                if (clearFile(filename)) {
+                if (storage.clear()) {
                     std::cout << "Database cleared successfully.\n";
                 } else {
                     std::cout << "Failed to clear database.\n";
