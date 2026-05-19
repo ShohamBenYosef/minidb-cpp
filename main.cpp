@@ -103,31 +103,92 @@ bool findUserById(const std::string& filename, int id, User& res) {
 }
 
 
-int main(){
-    
-    clearFile("users.db");
+int main() {
+    const std::string filename = "users.db";
 
-    User user1 = createUser(1, "Shoham", 32);
-    User user2 = createUser(2, "Dana", 24);
-    User user3 = createUser(3, "Noam", 29);
+    int choice = 0;
 
-    saveUserToFile(user1, "users.db");
-    saveUserToFile(user2, "users.db");
-    saveUserToFile(user3, "users.db");
+    while (true) {
+        std::cout << "\nMiniDB Menu:\n"
+                  << "1. Insert user\n"
+                  << "2. List all users\n"
+                  << "3. Find user by id\n"
+                  << "4. Clear database\n"
+                  << "0. Exit\n"
+                  << "Choose option: ";
 
-    std::cout << "\nAll users in file:\n";
-    loadAllUsersFromFile("users.db");
+        std::cin >> choice;
 
-    std::cout << "\nSearching for user with id 2:\n";
+        switch (choice) {
+            case 0: {
+                std::cout << "Goodbye!\n";
+                return 0;
+            }
 
-    User FoundUser;
+            case 1: {
+                int id;
+                std::string name;
+                int age;
 
-    if (findUserById("users.db", 2, FoundUser)){
-        std::cout <<"User found:\n";
-        printUser(FoundUser);
-    } else {
-        std::cout << "User not found" << std::endl;
+                std::cout << "Enter id: ";
+                std::cin >> id;
+
+                std::cout << "Enter name: ";
+                std::cin >> name;
+
+                std::cout << "Enter age: ";
+                std::cin >> age;
+
+                User user = createUser(id, name, age);
+
+                if (saveUserToFile(user, filename)) {
+                    std::cout << "User inserted successfully.\n";
+                } else {
+                    std::cout << "Failed to insert user.\n";
+                }
+
+                break;
+            }
+
+            case 2: {
+                std::cout << "\nAll users:\n";
+                loadAllUsersFromFile(filename);
+                break;
+            }
+
+            case 3: {
+                int id;
+                User foundUser;
+
+                std::cout << "Enter id to search: ";
+                std::cin >> id;
+
+                if (findUserById(filename, id, foundUser)) {
+                    std::cout << "User found:\n";
+                    printUser(foundUser);
+                } else {
+                    std::cout << "User not found.\n";
+                }
+
+                break;
+            }
+
+            case 4: {
+                if (clearFile(filename)) {
+                    std::cout << "Database cleared successfully.\n";
+                } else {
+                    std::cout << "Failed to clear database.\n";
+                }
+
+                break;
+            }
+
+            default: {
+                std::cout << "Invalid option.\n";
+                break;
+            }
+        }
     }
 
     return 0;
-}
+}    
