@@ -3,69 +3,59 @@
 #include <limits>
 #include <vector>
 
+#include "CommandParser.hpp"
 #include "StorageEngine.hpp"
 #include "StorageErrors.hpp"
 
-int readInt(const std::string& prompt) {
-    int value;
 
-    while (true) {
-        std::cout << prompt;
-        std::cin >> value;
 
-        if (std::cin) {
-            return value;
-        }
-
-        std::cout << "Invalid input. Please enter a number.\n";
-
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    }
+void printHelp() {
+    std::cout << "\nAvailable commands:\n"
+              << "  insert <id> <name> <age>   Insert a new user\n"
+              << "  list                       List all users\n"
+              << "  find <id>                  Find user by ID\n"
+              << "  update <id> <name> <age>   Update user by ID\n"
+              << "  delete <id>                Delete user by ID\n"
+              << "  clear                      Clear the database\n"
+              << "  stats                      Show database statistics\n"
+              << "  help                       Show this help message\n"
+              << "  exit                       Exit MiniDB\n";
 }
+
+
 
 int main() {
     StorageEngine storage("users.db");
-
     while (true) {
-        std::cout << "\nMiniDB Menu:\n"
-                  << "1. Insert user\n"
-                  << "2. List all users\n"
-                  << "3. Find user by id\n"
-                  << "4. Clear database\n"
-                  << "5. Delete user by id\n"
-                  << "6. Update user by id\n"
-                  << "7. Show DataBase stats.\n"
-                  << "0. Exit\n";
+        std::string line;
+        std::cout << "\nminidb$ ";
+        std::getline(std::cin, line);
 
-        int choice = readInt("Choose option: ");
+        Command command = parseCommand(line);
 
         try {
-            switch (choice) {
-                case 0: {
+            switch (command.type) {
+                case CommandType::Exit: {
                     std::cout << "Goodbye!\n";
                     return 0;
                 }
 
-                case 1: {
-                    int id = readInt("Enter id: ");
+                case CommandType::Help:{
+                    printHelp();
+                    break;
+                }
+
+                case CommandType::Insert: {
 
                     // Enforce ID uniqueness, similar to a primary key.
                     User existingUser;
 
-                    if (storage.findUserById(id, existingUser)) {
-                        std::cout << "Error: user with ID " << id
-                                  << " alredy exists.\n";
+                    if (storage.findUserById(command.id, existingUser)) {
+                        std::cout << "Error: user with ID " << command.id << " alredy exists." << std::endl;
                         break;
                     }
-
-                    std::string name;
-                    std::cout << "Enter name: ";
-                    std::cin >> name;
-
-                    int age = readInt("Enter age: ");
-
-                    User user = createUser(id, name, age);
+                    
+                    User user = createUser(command.id, command.name, command.age);
 
                     storage.saveUser(user);
                     std::cout << "User inserted successfully.\n";
@@ -73,7 +63,7 @@ int main() {
                     break;
                 }
 
-                case 2: {
+                case CommandType::List: {
                     std::vector<User> users = storage.loadAllUsers();
                     
                     if (users.empty()) {
@@ -89,12 +79,11 @@ int main() {
                     break;
                 }
 
-                case 3: {
-                    int id = readInt("Enter id to search: ");
+                case CommandType::Find: {
 
                     User foundUser;
 
-                    if (storage.findUserById(id, foundUser)) {
+                    if (storage.findUserById(command.id, foundUser)) {
                         std::cout << "User found:\n";
                         printUser(foundUser);
                     } else {
@@ -104,54 +93,49 @@ int main() {
                     break;
                 }
 
-                case 4: {
+                case CommandType::Clear: {
                     storage.clear();
                     std::cout << "Database is clear.\n";
                     break;
                 }
 
-                case 5: {
-                    int id = readInt("Enter id to delete: ");
+                case CommandType::Delete: {
 
-                    if (storage.deleteUserById(id)) {
+                    if (storage.deleteUserById(command.id)) {
                         std::cout << "User delete successfully.\n";
                     } else {
                         std::cout << "User not found.\n";
                     }
-
                     break;
                 }
 
-                case 6: {
-                    int id = readInt("Enter user id to update: ");
-
+                case CommandType::Update: {
                     User existingUser;
 
-                    if (!storage.findUserById(id, existingUser)) {
+                    if (!storage.findUserById(command.id, existingUser)) {
                         std::cout << "User not found.\n";
                         break;
                     }
 
-                    std::string newName;
-                    std::cout << "Enter new name: ";
-                    std::cin >> newName;
+                    User updatedUser = createUser(command.id, command.name, command.age);
 
-                    int newAge = readInt("Enter new age: ");
-
-                    User updatedUser = createUser(id, newName, newAge);
-
-                    storage.updateUserById(id, updatedUser);
+                    storage.updateUserById(command.id, updatedUser);
                     std::cout << "User updated successfully.\n";
 
                     break;
                 }
 
-                case 7: {
+                case CommandType::Stats: {
                     std::cout << "\nDB Stats:\n"
                             << "Users: " << storage.countUsers() << std::endl
                             << "Record size: " << storage.recordSize() << " bytes." << std::endl
                             << "Storage file: " << storage.getFilename() << std::endl << std::endl;
+                    break;
+                }
 
+                case CommandType::Invalid: {
+                    std::cout << "Invaid command. try 'help'.. " << std::endl;
+                    break;
                 }
 
                 default: {
@@ -164,6 +148,7 @@ int main() {
         } catch (const std::exception& ex) {
             std::cout << "Unexpected error: " << ex.what() << '\n';
         }
+        
     }
 
     return 0;

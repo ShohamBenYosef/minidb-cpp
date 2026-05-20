@@ -16,6 +16,8 @@ The project is built as a learning-oriented systems programming project, focusin
 - Menu-based insert, list, find, and clear operations
 - Validated integer input handling
 - Basic error handling for file operations
+- Command parser for text-based CLI commands
+- Text commands: insert, list, find, update, delete, clear, stats, help, exit
 - `StorageEngine` class abstraction for file-based storage operations
 
 
