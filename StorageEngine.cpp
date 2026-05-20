@@ -1,120 +1,128 @@
 #include "StorageEngine.hpp"
+#include "StorageErrors.hpp"
+
 #include <iostream>
 #include <cstring>
 #include <fstream>
 #include <cstdio>
 
-
 StorageEngine::StorageEngine(const std::string& filename)
     : filename(filename) {
 }
 
-bool StorageEngine::saveUser(const User& user){
-    
+bool StorageEngine::saveUser(const User& user) {
     std::ofstream file(filename, std::ios::binary | std::ios::app);
-    
-    if (!file.is_open()) {
-        std::cerr << "Error: failed to open file: " << filename << std::endl;
-        return false;
-    }
-    
+
+    if (!file.is_open())
+        throw StorageException(StorageErrorCode::FileOpenFailed, std::string(OPEN_DB_FILE) + filename);
+
     file.write(reinterpret_cast<const char*>(&user), sizeof(User));
 
-    if (!file) {
-        std::cerr << "Error: failed to write user to file." << std::endl;
-        return false;
-    }
+    if (!file)
+        throw StorageException(StorageErrorCode::FileWriteFailed, std::string(WRITE_DB_FILE) + filename);
+    
 
     return true;
 }
 
 bool StorageEngine::updateUserById(int id, const User& updatedUser) {
-    std::fstream file (filename, std::ios::binary | std::ios::in | std::ios::out);
+    std::fstream file(filename, std::ios::binary | std::ios::in | std::ios::out);
 
     if (!file.is_open()) {
-        std::cerr << "Error: failed to open file: " << filename << std::endl;
-        return false;
+        throw StorageException(StorageErrorCode::FileOpenFailed, std::string(OPEN_DB_FILE) + filename);
     }
 
     User user;
-    
-    while (file.read(reinterpret_cast<char*>(&user), sizeof(User))) { // search for right record.
+
+    while (file.read(reinterpret_cast<char*>(&user), sizeof(User))) {
         if (user.id == id) {
-            file.seekp(-static_cast<std::streamoff>(sizeof(User)), std::ios::cur); // get back to top of record.. 
+            // Move the write cursor back to the beginning of this record.
+            file.seekp(-static_cast<std::streamoff>(sizeof(User)), std::ios::cur);
+
+            if (!file) {
+                throw StorageException(StorageErrorCode::FileSeekFailed, std::string(SEEK_DB_FILE) + filename);
+            }
+
             file.write(reinterpret_cast<const char*>(&updatedUser), sizeof(User));
+
+            if (!file) {
+                throw StorageException(StorageErrorCode::FileWriteFailed, std::string(UPDATE_DB_FILE) + filename);
+            }
+
             return true;
         }
     }
 
     if (!file.eof()) {
-        std::cerr << "Error: failed while reading from file." << std::endl;
+        throw StorageException(StorageErrorCode::FileReadFailed, std::string(READ_DB_FILE) + filename);
     }
 
-    file.close();
+    // User not found is not a storage error.
     return false;
 }
 
-bool StorageEngine::deleteUserById(int id){
+bool StorageEngine::deleteUserById(int id) {
     std::ifstream file(filename, std::ios::binary);
 
     if (!file.is_open()) {
-        std::cerr << "Error: failed to open file: " << filename << std::endl;
-        return false;
+        throw StorageException(StorageErrorCode::FileOpenFailed, std::string(OPEN_DB_FILE) + filename);
     }
 
-    std::string tmpFilename = filename + ".tmp";
+    const std::string tmpFilename = filename + ".tmp";
     std::ofstream tmp(tmpFilename, std::ios::binary);
 
     if (!tmp.is_open()) {
-        std::cerr << "Error: failed to open temp file: " << tmpFilename << std::endl;
-        return false;
+        throw StorageException(StorageErrorCode::TempFileOpenFailed, std::string(OPEN_TEMP_FILE) + tmpFilename);
     }
 
     User user;
     bool found = false;
 
     while (file.read(reinterpret_cast<char*>(&user), sizeof(User))) {
-        if (user.id == id){
+        if (user.id == id) {
             found = true;
             continue;
         }
+
         tmp.write(reinterpret_cast<const char*>(&user), sizeof(User));
 
-        if(!tmp) {
-            std::cerr << "Error: faild whilewriting to temporary file." << std::endl;
+        if (!tmp) {
             file.close();
             tmp.close();
             std::remove(tmpFilename.c_str());
-            return false;
+
+            throw StorageException(StorageErrorCode::FileWriteFailed, std::string(WRITE_DB_FILE) + tmpFilename);
         }
     }
 
     if (!file.eof()) {
-        std::cerr << "Error: failed while reading from file." << std::endl;
         file.close();
         tmp.close();
         std::remove(tmpFilename.c_str());
-        return false;
+
+        throw StorageException(StorageErrorCode::FileReadFailed, std::string(READ_DB_FILE) + filename);
     }
 
     file.close();
     tmp.close();
 
+    // User not found is not a storage error.
+    // Remove the temporary file and return false.
     if (!found) {
         std::remove(tmpFilename.c_str());
         return false;
     }
 
     if (std::remove(filename.c_str()) != 0) {
-        std::cerr << "Error: faild to remove original file." << std::endl;
         std::remove(tmpFilename.c_str());
-        return false;
+
+        throw StorageException(StorageErrorCode::FileRemoveFailed, std::string(REMOVE_DB_FILE) + filename);
     }
 
     if (std::rename(tmpFilename.c_str(), filename.c_str()) != 0) {
-        std::cerr << "Error: faild to rename temp file." << std::endl;
-        return false;
+        throw StorageException(StorageErrorCode::FileRenameFailed, std::string(RENAME_DB_FILE) + tmpFilename + " -> " + filename);
     }
+
     return true;
 }
 
@@ -122,8 +130,7 @@ bool StorageEngine::loadAllUsers() const {
     std::ifstream file(filename, std::ios::binary);
 
     if (!file.is_open()) {
-        std::cerr << "Error: failed to open file: " << filename << std::endl;
-        return false;
+        throw StorageException(StorageErrorCode::FileOpenFailed, std::string(OPEN_DB_FILE) + filename);
     }
 
     User user;
@@ -133,8 +140,7 @@ bool StorageEngine::loadAllUsers() const {
     }
 
     if (!file.eof()) {
-        std::cerr << "Error: failed while reading from file." << std::endl;
-        return false;
+        throw StorageException(StorageErrorCode::FileReadFailed, std::string(READ_DB_FILE) + filename);
     }
 
     return true;
@@ -143,24 +149,24 @@ bool StorageEngine::loadAllUsers() const {
 bool StorageEngine::findUserById(int id, User& res) const {
     std::ifstream file(filename, std::ios::binary);
 
-    if(!file.is_open()) {
-        std::cerr << "Error: failed to open file: " << filename << std::endl;
-        return false;
+    if (!file.is_open()) {
+        throw StorageException(StorageErrorCode::FileOpenFailed, std::string(OPEN_DB_FILE) + filename);
     }
 
     User currUser;
 
-    while (file.read(reinterpret_cast<char*>(&currUser), sizeof(User))){
-        if (currUser.id == id){
+    while (file.read(reinterpret_cast<char*>(&currUser), sizeof(User))) {
+        if (currUser.id == id) {
             res = currUser;
             return true;
         }
     }
 
     if (!file.eof()) {
-        std::cerr << "Error: failed while reading from file." << std::endl;
+        throw StorageException(StorageErrorCode::FileReadFailed, std::string(READ_DB_FILE) + filename);
     }
 
+    // User not found is not an exception.
     return false;
 }
 
@@ -168,20 +174,19 @@ bool StorageEngine::clear() const {
     std::ofstream file(filename, std::ios::binary | std::ios::trunc);
 
     if (!file.is_open()) {
-        std::cerr << "Error: failed to clear file: " << filename << std::endl;
-        return false;
+        throw StorageException(StorageErrorCode::FileOpenFailed, std::string(OPEN_DB_FILE) + filename);
     }
 
     return true;
 }
 
-User createUser(int id, const std::string& name, int age){
+User createUser(int id, const std::string& name, int age) {
     User newUser;
     newUser.id = id;
     newUser.age = age;
 
-    strncpy(newUser.name, name.c_str(), sizeof(newUser.name) - 1);
-    newUser.name[sizeof(newUser.name) - 1] = '\0'; // make sure its end.
+    std::strncpy(newUser.name, name.c_str(), sizeof(newUser.name) - 1);
+    newUser.name[sizeof(newUser.name) - 1] = '\0';
 
     return newUser;
 }
