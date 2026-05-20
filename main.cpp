@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <limits>
+#include <vector>
 
 #include "StorageEngine.hpp"
 #include "StorageErrors.hpp"
@@ -72,8 +73,18 @@ int main() {
                 }
 
                 case 2: {
-                    std::cout << "\nAll users:\n";
-                    storage.loadAllUsers();
+                    std::vector<User> users = storage.loadAllUsers();
+                    
+                    if (users.empty()) {
+                        std::cout << "There is no users." << std::endl;
+                    } else {
+                        std::cout << "\nAll users:\n";
+                    
+                        for (const User& user : users) {
+                            printUser(user);
+                        }
+                    }
+
                     break;
                 }
 

@@ -1,10 +1,12 @@
-#include "StorageEngine.hpp"
-#include "StorageErrors.hpp"
-
 #include <iostream>
 #include <cstring>
 #include <fstream>
 #include <cstdio>
+#include <vector>
+
+#include "StorageEngine.hpp"
+#include "StorageErrors.hpp"
+
 
 StorageEngine::StorageEngine(const std::string& filename)
     : filename(filename) {
@@ -126,24 +128,25 @@ bool StorageEngine::deleteUserById(int id) {
     return true;
 }
 
-bool StorageEngine::loadAllUsers() const {
+std::vector<User> StorageEngine::loadAllUsers() const {
     std::ifstream file(filename, std::ios::binary);
 
     if (!file.is_open()) {
         throw StorageException(StorageErrorCode::FileOpenFailed, std::string(OPEN_DB_FILE) + filename);
     }
 
+    std::vector<User> users;
     User user;
 
     while (file.read(reinterpret_cast<char*>(&user), sizeof(User))) {
-        printUser(user);
+        users.push_back(user);
     }
 
     if (!file.eof()) {
         throw StorageException(StorageErrorCode::FileReadFailed, std::string(READ_DB_FILE) + filename);
     }
 
-    return true;
+    return users;
 }
 
 bool StorageEngine::findUserById(int id, User& res) const {

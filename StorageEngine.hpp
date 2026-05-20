@@ -2,6 +2,7 @@
 #define STORAGE_ENGINE_HPP
 
 #include <string>
+#include <vector>
 
 struct User {
     int id;
@@ -19,7 +20,7 @@ public:
     bool saveUser(const User& user);
     bool updateUserById(int id, const User& updatedUser);
     bool deleteUserById(int id);
-    bool loadAllUsers() const;
+    std::vector<User> loadAllUsers() const;
     bool findUserById(int id, User& res) const;
     bool clear() const;
 };
