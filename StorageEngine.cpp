@@ -28,6 +28,32 @@ bool StorageEngine::saveUser(const User& user){
     return true;
 }
 
+bool StorageEngine::updateUserById(int id, const User& updatedUser) {
+    std::fstream file (filename, std::ios::binary | std::ios::in | std::ios::out);
+
+    if (!file.is_open()) {
+        std::cerr << "Error: failed to open file: " << filename << std::endl;
+        return false;
+    }
+
+    User user;
+    
+    while (file.read(reinterpret_cast<char*>(&user), sizeof(User))) { // search for right record.
+        if (user.id == id) {
+            file.seekp(-static_cast<std::streamoff>(sizeof(User)), std::ios::cur); // get back to top of record.. 
+            file.write(reinterpret_cast<const char*>(&updatedUser), sizeof(User));
+            return true;
+        }
+    }
+
+    if (!file.eof()) {
+        std::cerr << "Error: failed while reading from file." << std::endl;
+    }
+
+    file.close();
+    return false;
+}
+
 bool StorageEngine::deleteUserById(int id){
     std::ifstream file(filename, std::ios::binary);
 

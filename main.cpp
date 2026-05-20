@@ -35,6 +35,7 @@ int main() {
                   << "3. Find user by id\n"
                   << "4. Clear database\n"
                   << "5. Delete user by id\n"
+                  << "6. Update user by id\n"
                   << "0. Exit\n";
 
         choice = readInt("Choose option: ");
@@ -114,6 +115,33 @@ int main() {
                 } else {
                     std::cout << "User not found." << std::endl;
                 }
+                break;
+            }
+
+            case 6: {
+                int id = readInt("Enter user's id to update: ");
+
+                User user;
+
+                if (!storage.findUserById(id, user)) {
+                    std::cout << "User not found." << std::endl;
+                    break;
+                }
+
+                std::string newName;
+                std::cout << "enter new name: ";
+                std::cin >> newName;
+
+                int newAge = readInt("Enter new age: ");
+                
+                User updatedUser = createUser(id, newName, newAge);
+
+                if (storage.updateUserById(id, updatedUser)) {
+                    std::cout << "User updated." << std::endl;
+                } else {
+                    std::cout << "Faild to update." <<std::endl;
+                }
+
                 break;
             }
 
