@@ -23,9 +23,15 @@ public:
     std::vector<User> loadAllUsers() const;
     bool findUserById(int id, User& res) const;
     bool clear() const;
+
+    std::size_t countUsers() const;
+    std::size_t recordSize() const;
+    std::string getFilename() const;    
 };
 
 User createUser(int id, const std::string& name, int age);
 void printUser(const User& user);
+
+
 
 #endif

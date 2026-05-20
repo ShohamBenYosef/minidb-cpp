@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cstdio>
 #include <vector>
+#include <cstddef>
 
 #include "StorageEngine.hpp"
 #include "StorageErrors.hpp"
@@ -199,4 +200,24 @@ void printUser(const User& user) {
               << ", Name: " << user.name
               << ", Age: " << user.age
               << std::endl;
+}
+
+std::size_t StorageEngine::countUsers() const{
+    // return loadAllUsers().size(); // read all record to the memory..
+
+    std::ifstream file (filename, std::ios::binary | std::ios::ate);
+    std::streamsize fileSize = file.tellg();
+
+    if (fileSize % sizeof(User) != 0) {
+        throw StorageException(StorageErrorCode::FileReadFailed, std::string(READ_DB_FILE) + filename);
+    }
+    return (fileSize / sizeof(User));
+}
+
+std::size_t StorageEngine::recordSize() const {
+    return sizeof(User);
+}
+
+std::string StorageEngine::getFilename() const {
+    return filename;
 }

@@ -35,6 +35,7 @@ int main() {
                   << "4. Clear database\n"
                   << "5. Delete user by id\n"
                   << "6. Update user by id\n"
+                  << "7. Show DataBase stats.\n"
                   << "0. Exit\n";
 
         int choice = readInt("Choose option: ");
@@ -143,6 +144,14 @@ int main() {
                     std::cout << "User updated successfully.\n";
 
                     break;
+                }
+
+                case 7: {
+                    std::cout << "\nDB Stats:\n"
+                            << "Users: " << storage.countUsers() << std::endl
+                            << "Record size: " << storage.recordSize() << " bytes." << std::endl
+                            << "Storage file: " << storage.getFilename() << std::endl << std::endl;
+
                 }
 
                 default: {
