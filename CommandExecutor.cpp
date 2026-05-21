@@ -1,0 +1,138 @@
+#include "CommandExecutor.hpp"
+
+#include <iostream>
+#include <vector>
+
+namespace {
+    void printHelp() {
+    std::cout << "\nAvailable commands:\n"
+              << "  insert <id> <name> <age>   Insert a new user\n"
+              << "  list                       List all users\n"
+              << "  find <id>                  Find user by ID\n"
+              << "  update <id> <name> <age>   Update user by ID\n"
+              << "  delete <id>                Delete user by ID\n"
+              << "  clear                      Clear the database\n"
+              << "  stats                      Show database statistics\n"
+              << "  help                       Show this help message\n"
+              << "  exit                       Exit MiniDB\n";
+}
+} // namespace
+
+
+bool executeCommand(const Command& command, StorageEngine& storage) {
+    switch (command.type)
+    {
+        case CommandType::Exit: {
+            std::cout << "Goodbye!" << std::endl;
+            return false;
+        }
+
+        case CommandType::Help:{
+            printHelp();
+            return true;
+        }
+
+        case CommandType::Insert: {
+
+            // Enforce ID uniqueness, similar to a primary key.
+            User existingUser;
+
+            if (storage.findUserById(command.id, existingUser)) {
+                std::cout << "Error: user with ID " << command.id << " alredy exists." << std::endl;
+                return true;
+
+            }
+            
+            User user = createUser(command.id, command.name, command.age);
+
+            storage.saveUser(user);
+            std::cout << "User inserted successfully.\n";
+
+            return true;
+        }
+
+        case CommandType::List: {
+            std::vector<User> users = storage.loadAllUsers();
+            
+            if (users.empty()) {
+                std::cout << "There is no users." << std::endl;
+            } else {
+                std::cout << "\nAll users:\n";
+            
+                for (const User& user : users) {
+                    printUser(user);
+                }
+            }
+
+            return true;
+        }
+
+        case CommandType::Find: {
+
+            User foundUser;
+
+            if (storage.findUserById(command.id, foundUser)) {
+                std::cout << "User found:\n";
+                printUser(foundUser);
+            } else {
+                std::cout << "User not found.\n";
+            }
+
+            return true;
+        }
+
+        case CommandType::Clear: {
+            storage.clear();
+            std::cout << "Database is clear.\n";
+            return true;
+        }
+
+        case CommandType::Delete: {
+
+            if (storage.deleteUserById(command.id)) {
+                std::cout << "User delete successfully.\n";
+            } else {
+                std::cout << "User not found.\n";
+            }
+            return true;
+        }
+
+        case CommandType::Update: {
+            User existingUser;
+
+            if (!storage.findUserById(command.id, existingUser)) {
+                std::cout << "User not found.\n";
+                return true;
+            }
+
+            User updatedUser = createUser(command.id, command.name, command.age);
+
+            storage.updateUserById(command.id, updatedUser);
+            std::cout << "User updated successfully.\n";
+
+            return true;
+        }
+
+        case CommandType::Stats: {
+            std::cout << "\nDB Stats:\n"
+                    << "Users: " << storage.countUsers() << std::endl
+                    << "Record size: " << storage.recordSize() << " bytes." << std::endl
+                    << "Storage file: " << storage.getFilename() << std::endl << std::endl;
+            return true;
+        }
+
+        case CommandType::Invalid: {
+            if (!command.errorMessage.empty()) {
+                std::cout << "Invalid command: " << command.errorMessage << '\n';
+            } else {
+                std::cout << "Invalid command. Type 'help' for available commands.\n";
+            }
+            return true;
+        }
+
+        default: {
+            std::cout << "Invalid option.\n";
+            return true;
+        }
+    }
+}
