@@ -14,9 +14,10 @@ namespace {
               << "  clear                      Clear the database\n"
               << "  stats                      Show database statistics\n"
               << "  benchmark <id>             Compare linear scan vs indexed lookup\n"
+              << "  seed <count>               Generate test users for benchmarking\n"              
               << "  help                       Show this help message\n"
               << "  exit                       Exit MiniDB\n";
-}
+    }
 } // namespace
 
 
@@ -134,6 +135,28 @@ bool executeCommand(const Command& command, StorageEngine& storage) {
                     << "Linear search: " << linearDuration <<" ms" << std::endl
                     << "Indexed search: " << indexedDuration << " ms" << std::endl;
                 
+            return true;
+        }
+
+        case CommandType::Seed: {
+            int count = command.id;
+
+            if (count <= 0) {
+                std::cout << "Seed count must be positive." << std::endl;
+                return true;
+            }
+
+            storage.clear();
+
+            for (int i = 0; i <= count; ++i) {
+                std::string name = "User" + std::to_string(i);
+                int age = 18 + (i % 60);
+
+                User user = createUser(i,name, age);
+                storage.saveUser(user);
+            }
+
+            std::cout << "Seeded " << count << " users." << std::endl;
             return true;
         }
 

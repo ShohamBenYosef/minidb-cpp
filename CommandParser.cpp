@@ -13,6 +13,7 @@ namespace {
     const std::string FIND_USAGE = "Usage: find <id>";
     const std::string DELETE_USAGE = "Usage: delete <id>";
     const std::string BENCHMARK_USAGE = "Usage: benchmark <id>";
+    const std::string SEED_USAGE = "Usage: seed <count>";
     const std::string NO_ARGUMENTS_USAGE = "This command does not accept arguments.";
     const std::string UNKNOWN_COMMAND = "Unknown command. Type 'help' for available commands.";
 
@@ -80,7 +81,6 @@ Command parseCommand(const std::string& line) {
     action = toLower(action);
 
 
-
     if (action == "insert") {
         return makeUserCommand(CommandType::Insert, iss ,INSERT_USAGE);
     }
@@ -111,6 +111,10 @@ Command parseCommand(const std::string& line) {
 
     if (action == "benchmark") {
         return makeSingleArgumentCommand(CommandType::Benchmark, iss, BENCHMARK_USAGE);
+    }
+    
+    if (action == "seed") {
+        return makeSingleArgumentCommand(CommandType::Seed, iss, SEED_USAGE);
     }
 
     if (action == "help") {
