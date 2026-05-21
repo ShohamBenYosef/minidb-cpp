@@ -26,6 +26,7 @@ struct Command {
     int age = 0;
 };
 
+
 Command parseCommand(const std::string& line);
 
 
