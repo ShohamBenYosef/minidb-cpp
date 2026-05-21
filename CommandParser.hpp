@@ -24,6 +24,7 @@ struct Command {
     int id = 0;
     std::string name;
     int age = 0;
+    std::string errorMessage;
 };
 
 

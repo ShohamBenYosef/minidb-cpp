@@ -134,7 +134,11 @@ int main() {
                 }
 
                 case CommandType::Invalid: {
-                    std::cout << "Invaid command. try 'help'.. " << std::endl;
+                    if (!command.errorMessage.empty()) {
+                        std::cout << "Invalid command: " << command.errorMessage << '\n';
+                    } else {
+                        std::cout << "Invalid command. Type 'help' for available commands.\n";
+                    }
                     break;
                 }
 

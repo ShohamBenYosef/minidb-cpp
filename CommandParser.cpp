@@ -7,6 +7,15 @@
 
 namespace {
 
+
+    const std::string INSERT_USAGE = "Usage: insert <id> <name> <age>";
+    const std::string UPDATE_USAGE = "Usage: update <id> <name> <age>";
+    const std::string FIND_USAGE = "Usage: find <id>";
+    const std::string DELETE_USAGE = "Usage: delete <id>";
+    const std::string NO_ARGUMENTS_USAGE = "This command does not accept arguments.";
+    const std::string UNKNOWN_COMMAND = "Unknown command. Type 'help' for available commands.";
+
+
     std::string toLower(std::string text) {
         std::transform(text.begin(), text.end(),text.begin(),
                     [](unsigned char c) {
@@ -20,13 +29,16 @@ namespace {
         return static_cast<bool>(iss >> extra);
     }
 
-    Command makeInvalidCommand() {
-        return Command{}; // invalid commad is the defult..
+    Command makeInvalidCommand(const std::string& message) {
+        Command command;
+        command.type = CommandType::Invalid;
+        command.errorMessage = message;
+        return command; 
     }
 
-    Command makeZeroArgumentsCommand(CommandType type, std::istringstream& iss) {
+    Command makeZeroArgumentsCommand(CommandType type, std::istringstream& iss, const std::string& message) {
         if (isExtraArguments(iss)) {
-            return makeInvalidCommand(); 
+            return makeInvalidCommand(message); 
         }
 
         Command command;
@@ -34,23 +46,23 @@ namespace {
         return command;
     }
 
-    Command makeSingleArgumentCommand(CommandType type, std::istringstream& iss) {
+    Command makeSingleArgumentCommand(CommandType type, std::istringstream& iss, const std::string& message) {
         Command command;
         command.type = type;
 
         if (!(iss >> command.id) || isExtraArguments(iss)) {
-            return makeInvalidCommand();
+            return makeInvalidCommand(message);
         }
 
         return command;
     }
 
-    Command makeUserCommand(CommandType type, std::istringstream& iss) {
+    Command makeUserCommand(CommandType type, std::istringstream& iss, const std::string& message) {
         Command command;
         command.type = type;
 
         if (!(iss >> command.id >> command.name >> command.age) || isExtraArguments(iss)) {
-            return makeInvalidCommand();
+            return makeInvalidCommand(message);
         }
 
         return command;
@@ -69,40 +81,40 @@ Command parseCommand(const std::string& line) {
 
 
     if (action == "insert") {
-        return makeUserCommand(CommandType::Insert, iss);
+        return makeUserCommand(CommandType::Insert, iss ,INSERT_USAGE);
     }
 
     if (action =="list") {
-        return makeZeroArgumentsCommand(CommandType::List, iss);
+        return makeZeroArgumentsCommand(CommandType::List, iss, NO_ARGUMENTS_USAGE);
     }
 
     if (action == "find") {
-        return makeSingleArgumentCommand(CommandType::Find, iss);
+        return makeSingleArgumentCommand(CommandType::Find, iss, FIND_USAGE);
     }
     
     if (action == "update") {
-        return makeUserCommand(CommandType::Update, iss);
+        return makeUserCommand(CommandType::Update, iss, UPDATE_USAGE);
     }
 
     if (action == "delete") {
-        return makeSingleArgumentCommand(CommandType::Delete, iss);
+        return makeSingleArgumentCommand(CommandType::Delete, iss,DELETE_USAGE);
     }
 
     if (action == "clear") {
-        return makeZeroArgumentsCommand(CommandType::Clear, iss);
+        return makeZeroArgumentsCommand(CommandType::Clear, iss, NO_ARGUMENTS_USAGE);
     }
 
     if (action == "stats") {
-        return makeZeroArgumentsCommand(CommandType::Stats, iss);
+        return makeZeroArgumentsCommand(CommandType::Stats, iss, NO_ARGUMENTS_USAGE);
     }
 
     if (action == "help") {
-        return makeZeroArgumentsCommand(CommandType::Help, iss);
+        return makeZeroArgumentsCommand(CommandType::Help, iss, NO_ARGUMENTS_USAGE);
     }
 
     if (action == "exit") {
-        return makeZeroArgumentsCommand(CommandType::Exit, iss);
+        return makeZeroArgumentsCommand(CommandType::Exit, iss, NO_ARGUMENTS_USAGE);
     }
 
-    return makeInvalidCommand();
+    return makeInvalidCommand(UNKNOWN_COMMAND);
 }
