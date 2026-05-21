@@ -12,6 +12,7 @@ namespace {
     const std::string UPDATE_USAGE = "Usage: update <id> <name> <age>";
     const std::string FIND_USAGE = "Usage: find <id>";
     const std::string DELETE_USAGE = "Usage: delete <id>";
+    const std::string BENCHMARK_USAGE = "Usage: benchmark <id>";
     const std::string NO_ARGUMENTS_USAGE = "This command does not accept arguments.";
     const std::string UNKNOWN_COMMAND = "Unknown command. Type 'help' for available commands.";
 
@@ -68,7 +69,7 @@ namespace {
         return command;
     }
 
-} // namespace {
+} // namespace 
 
 Command parseCommand(const std::string& line) {
     std::istringstream iss(line);
@@ -106,6 +107,10 @@ Command parseCommand(const std::string& line) {
 
     if (action == "stats") {
         return makeZeroArgumentsCommand(CommandType::Stats, iss, NO_ARGUMENTS_USAGE);
+    }
+
+    if (action == "benchmark") {
+        return makeSingleArgumentCommand(CommandType::Benchmark, iss, BENCHMARK_USAGE);
     }
 
     if (action == "help") {

@@ -24,7 +24,8 @@ public:
     bool updateUserById(int id, const User& updatedUser);
     bool deleteUserById(int id);
     std::vector<User> loadAllUsers() const;
-    bool findUserById(int id, User& res) const;
+    bool findUserByIdIndexed(int id, User& res) const;
+    bool findUserByIdLinear(int id, User& res) const;
     bool clear();
     
     std::size_t indexSize() const;

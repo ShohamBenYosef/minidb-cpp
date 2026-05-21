@@ -14,6 +14,7 @@ enum class CommandType {
     Update,
     Clear,
     Stats,
+    Benchmark,
     Help,
     Exit,
     Invalid

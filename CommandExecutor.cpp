@@ -13,6 +13,7 @@ namespace {
               << "  delete <id>                Delete user by ID\n"
               << "  clear                      Clear the database\n"
               << "  stats                      Show database statistics\n"
+              << "  benchmark <id>             Compare linear scan vs indexed lookup\n"
               << "  help                       Show this help message\n"
               << "  exit                       Exit MiniDB\n";
 }
@@ -37,7 +38,7 @@ bool executeCommand(const Command& command, StorageEngine& storage) {
             // Enforce ID uniqueness, similar to a primary key.
             User existingUser;
 
-            if (storage.findUserById(command.id, existingUser)) {
+            if (storage.findUserByIdIndexed(command.id, existingUser)) {
                 std::cout << "Error: user with ID " << command.id << " alredy exists." << std::endl;
                 return true;
 
@@ -71,7 +72,7 @@ bool executeCommand(const Command& command, StorageEngine& storage) {
 
             User foundUser;
 
-            if (storage.findUserById(command.id, foundUser)) {
+            if (storage.findUserByIdIndexed(command.id, foundUser)) {
                 std::cout << "User found:\n";
                 printUser(foundUser);
             } else {
@@ -100,7 +101,7 @@ bool executeCommand(const Command& command, StorageEngine& storage) {
         case CommandType::Update: {
             User existingUser;
 
-            if (!storage.findUserById(command.id, existingUser)) {
+            if (!storage.findUserByIdIndexed(command.id, existingUser)) {
                 std::cout << "User not found.\n";
                 return true;
             }
@@ -110,6 +111,29 @@ bool executeCommand(const Command& command, StorageEngine& storage) {
             storage.updateUserById(command.id, updatedUser);
             std::cout << "User updated successfully.\n";
 
+            return true;
+        }
+
+        case CommandType::Benchmark: {
+            User linearUser, indexedUser;
+
+            auto linearStart = std::chrono::high_resolution_clock::now();
+            bool linearSearch = storage.findUserByIdLinear(command.id, linearUser);
+            auto linearEnd = std::chrono::high_resolution_clock::now();
+            
+            auto linearDuration = std::chrono::duration_cast<std::chrono::microseconds>(linearEnd - linearStart).count();
+
+
+            auto indexedStart = std::chrono::high_resolution_clock::now();
+            bool indexedSearch = storage.findUserByIdIndexed(command.id, indexedUser);
+            auto indexedEnd = std::chrono::high_resolution_clock::now();
+
+            auto indexedDuration = std::chrono::duration_cast<std::chrono::microseconds>(indexedEnd - indexedStart).count();
+
+            std::cout << "\nBenchmark result for id " <<command.id << std::endl
+                    << "Linear search: " << linearDuration <<" ms" << std::endl
+                    << "Indexed search: " << indexedDuration << " ms" << std::endl;
+                
             return true;
         }
 

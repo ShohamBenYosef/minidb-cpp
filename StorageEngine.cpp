@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <vector>
 #include <cstddef>
+#include <chrono>
 
 #include "StorageEngine.hpp"
 #include "StorageErrors.hpp"
@@ -30,7 +31,7 @@ void StorageEngine::buildIndex() {
         if (!file.read(reinterpret_cast<char*>(&user), sizeof(User))) {
             break;
         }
-        
+
         index[user.id] = position;
     }
 
@@ -192,7 +193,7 @@ std::vector<User> StorageEngine::loadAllUsers() const {
     return users;
 }
 
-bool StorageEngine::findUserById(int id, User& res) const {
+bool StorageEngine::findUserByIdIndexed(int id, User& res) const {
     auto it = index.find(id);
 
     if (it == index.end()) { // run on all records and dont find this id.
@@ -220,6 +221,30 @@ bool StorageEngine::findUserById(int id, User& res) const {
     
     return true;
 }
+
+bool StorageEngine::findUserByIdLinear(int id, User& res) const {
+    std::ifstream file(filename, std::ios::binary);
+
+    if(!file.is_open()) {
+        throw StorageException(StorageErrorCode::FileOpenFailed, std::string(READ_DB_FILE) + filename);
+    }
+
+    User currUser;
+
+    while (file.read(reinterpret_cast<char*>(&currUser), sizeof(User))){
+        if (currUser.id == id) {
+            res = currUser;
+            return true;
+        }
+    }
+
+    if (!file.eof()) {
+        throw StorageException(StorageErrorCode::FileReadFailed, std::string(READ_DB_FILE) + filename);
+    }
+
+    return false;
+}
+
 
 bool StorageEngine::clear() {
     std::ofstream file(filename, std::ios::binary | std::ios::trunc);
