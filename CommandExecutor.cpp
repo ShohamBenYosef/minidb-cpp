@@ -117,7 +117,8 @@ bool executeCommand(const Command& command, StorageEngine& storage) {
             std::cout << "\nDB Stats:\n"
                     << "Users: " << storage.countUsers() << std::endl
                     << "Record size: " << storage.recordSize() << " bytes." << std::endl
-                    << "Storage file: " << storage.getFilename() << std::endl << std::endl;
+                    << "Storage file: " << storage.getFilename() << std::endl
+                    << "Indexed records: " << storage.indexSize() << std::endl << std::endl;
             return true;
         }
 
