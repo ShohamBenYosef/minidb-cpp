@@ -35,6 +35,7 @@ MiniDB_cpp/
     ├── StorageEngine.cpp
     ├── CommandParser.cpp
     └── CommandExecutor.cpp
+```text
 
 ## Tests
 
@@ -48,5 +49,4 @@ cmake --build build
 ./build/test_parser
 
 
-```text
 [User][User][User][User]
