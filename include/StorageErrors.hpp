@@ -45,6 +45,8 @@ inline constexpr const char* RENAME_DB_FILE =
 inline constexpr const char* SEEK_DB_FILE =
     "Could not seek inside database file: ";
 
+inline constexpr const char* CLOSE_DB_FILE = 
+    "Could not close file properly. file: ";
     
 inline std::string errorCodeToString(StorageErrorCode code) {
     switch (code) {

@@ -7,10 +7,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(minidb
-    main.cpp
-    StorageEngine.cpp
-    CommandParser.cpp
-    CommandExecutor.cpp
+    src/main.cpp
+    src/StorageEngine.cpp
+    src/CommandParser.cpp
+    src/CommandExecutor.cpp
+)
+
+target_include_directories(minidb PRIVATE
+    include
 )
 
 target_compile_options(minidb PRIVATE

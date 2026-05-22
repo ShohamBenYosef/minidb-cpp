@@ -1,37 +1,44 @@
-# MiniDB
+# MiniDB C++
 
-MiniDB is a lightweight binary file-based database prototype written in C++.
+MiniDB is a lightweight file-based database prototype written in modern C++.
 
-The project is built as a learning-oriented systems programming project, focusing on low-level file I/O, binary serialization, record storage, indexing, modular design, and command-line interaction.
+The project was built as a systems programming exercise focused on binary file storage, fixed-size records, command parsing, error handling, indexing, and basic performance comparison between linear scan and indexed lookup.
 
-## Current Features
+MiniDB is not intended to replace a real database. Its purpose is to demonstrate how low-level database-like components can be implemented from scratch using C++.
 
-- Fixed-size `User` records
-- Binary file persistence
-- Append-based record insertion
-- Sequential scan over stored records
-- Search user by ID
-- Duplicate user ID prevention
-- Interactive command-line interface
-- Menu-based insert, list, find, and clear operations
-- Validated integer input handling
-- Basic error handling for file operations
-- Command parser for text-based CLI commands
-- Text commands: insert, list, find, update, delete, clear, stats, help, exit
-- `StorageEngine` class abstraction for file-based storage operations
+## What the Project Demonstrates
 
+MiniDB stores `User` records in a binary file and exposes a small command-line interface for interacting with the data.
+
+Each record is stored in a fixed-size binary format, which allows the program to calculate record positions inside the file and perform direct access using file offsets.
+
+
+## Core Idea
+
+The database stores records sequentially in a binary file:
 
 ## Tech Stack
+C++
+Binary file I/O
+Object-oriented design
+Git/GitHub
 
-- C++
-- Binary file I/O
-- Object-oriented design
-- Git/GitHub
+## Project Structure
 
-## Build and Run
+```text
+MiniDB_cpp/
+├── CMakeLists.txt
+├── README.md
+├── include/
+│   ├── StorageEngine.hpp
+│   ├── StorageErrors.hpp
+│   ├── CommandParser.hpp
+│   └── CommandExecutor.hpp
+└── src/
+    ├── main.cpp
+    ├── StorageEngine.cpp
+    ├── CommandParser.cpp
+    └── CommandExecutor.cpp
 
-Compile:
-
-```bash
-g++ -std=c++17 -Wall -Wextra -pedantic main.cpp StorageEngine.cpp -o minidb
-./minidb
+```text
+[User][User][User][User]
