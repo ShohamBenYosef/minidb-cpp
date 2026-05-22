@@ -16,6 +16,10 @@ namespace {
     const std::string SEED_USAGE = "Usage: seed <count>";
     const std::string NO_ARGUMENTS_USAGE = "This command does not accept arguments.";
     const std::string UNKNOWN_COMMAND = "Unknown command. Type 'help' for available commands.";
+    
+    // Start to make it SQL-Like..
+    const std::string SELECT_USAGE ="Usage: SELECT * FROM users WHERE <id>";
+    const std::string INSERT_INTO_USAGE ="Usage: INSERT INTO users VALUES <id> <name> <age>";
 
 
     std::string toLower(std::string text) {
@@ -72,6 +76,87 @@ namespace {
 
 } // namespace 
 
+
+
+
+Command parseInsertIntoCommand(std::istringstream& iss) {
+    std::string intoKeyword, tableName, valuesKeyword;
+
+    if (!(iss >> intoKeyword >> tableName >> valuesKeyword)) {
+        return makeInvalidCommand(INSERT_INTO_USAGE);
+    }
+
+    intoKeyword = toLower(intoKeyword);
+    tableName = toLower(tableName);
+    valuesKeyword = toLower(valuesKeyword);
+
+    if (intoKeyword != "into" || tableName != "users" || valuesKeyword != "values") {
+        return makeInvalidCommand(INSERT_INTO_USAGE);
+    }
+
+    Command command;
+    command.type = CommandType::Insert;
+
+    if (!(iss >> command.id >> command.name >> command.age) || isExtraArguments(iss)) {
+        return makeInvalidCommand(INSERT_INTO_USAGE);
+    }
+    
+    return command;
+}
+
+
+// SQL-Like functions
+Command parseSelectCommand(std::istringstream& iss) {
+    std::string star, fromKeyWord, tableName;
+
+    if (!(iss >> star >> fromKeyWord >> tableName)) {
+        return makeInvalidCommand(SELECT_USAGE);
+    }
+
+    fromKeyWord = toLower(fromKeyWord);
+    tableName = toLower(tableName);
+
+    if (star != "*" || fromKeyWord != "from" || tableName != "users") {
+        return makeInvalidCommand(SELECT_USAGE);
+    }
+
+    std::string whereKeyword;
+
+    // SELECT * from users *WHERE...*
+    if (!(iss >> whereKeyword)) {
+        Command command;
+        command.type = CommandType::List;
+        return command;
+    }
+
+    whereKeyword = toLower(whereKeyword);
+
+    if (whereKeyword != "where") {
+        return makeInvalidCommand(SELECT_USAGE);
+    }
+
+    std::string field, equls;
+    int id;
+
+    if (!(iss >> field >> equls >> id)) {
+        return makeInvalidCommand(SELECT_USAGE);
+    }
+
+    field = toLower(field);
+
+    if (field != "id" || equls != "=" || isExtraArguments(iss)) {
+        return makeInvalidCommand(SELECT_USAGE);
+    }
+
+    Command command;
+    command.type = CommandType::Find;
+    command.id = id;
+    return command;
+}
+
+
+
+
 Command parseCommand(const std::string& line) {
     std::istringstream iss(line);
 
@@ -81,17 +166,17 @@ Command parseCommand(const std::string& line) {
     action = toLower(action);
 
 
-    if (action == "insert") {
-        return makeUserCommand(CommandType::Insert, iss ,INSERT_USAGE);
-    }
+    // if (action == "insert") {
+    //     return makeUserCommand(CommandType::Insert, iss ,INSERT_USAGE);
+    // }
 
-    if (action =="list") {
-        return makeZeroArgumentsCommand(CommandType::List, iss, NO_ARGUMENTS_USAGE);
-    }
+    // if (action =="list") {
+    //     return makeZeroArgumentsCommand(CommandType::List, iss, NO_ARGUMENTS_USAGE);
+    // }
 
-    if (action == "find") {
-        return makeSingleArgumentCommand(CommandType::Find, iss, FIND_USAGE);
-    }
+    // if (action == "find") {
+    //     return makeSingleArgumentCommand(CommandType::Find, iss, FIND_USAGE);
+    // }
     
     if (action == "update") {
         return makeUserCommand(CommandType::Update, iss, UPDATE_USAGE);
@@ -123,6 +208,16 @@ Command parseCommand(const std::string& line) {
 
     if (action == "exit") {
         return makeZeroArgumentsCommand(CommandType::Exit, iss, NO_ARGUMENTS_USAGE);
+    }
+
+
+
+    if (action == "select") {
+       return parseSelectCommand(iss);
+    }
+
+    if (action == "insert") {
+        return parseInsertIntoCommand(iss);
     }
 
     return makeInvalidCommand(UNKNOWN_COMMAND);
