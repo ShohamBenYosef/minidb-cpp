@@ -11,17 +11,16 @@ namespace {
     const std::string INSERT_USAGE = "Usage: insert <id> <name> <age>";
     const std::string UPDATE_USAGE = "Usage: update <id> <name> <age>";
     const std::string FIND_USAGE = "Usage: find <id>";
-    const std::string DELETE_USAGE = "Usage: delete <id>";
+    //const std::string DELETE_USAGE = "Usage: delete <id>";
     const std::string BENCHMARK_USAGE = "Usage: benchmark <id>";
     const std::string SEED_USAGE = "Usage: seed <count>";
     const std::string NO_ARGUMENTS_USAGE = "This command does not accept arguments.";
     const std::string UNKNOWN_COMMAND = "Unknown command. Type 'help' for available commands.";
     
     // Start to make it SQL-Like..
-    const std::string SELECT_USAGE ="Usage: SELECT * FROM users WHERE <id>";
+    const std::string SELECT_USAGE ="Usage: SELECT * FROM users WHERE id = <id>";
     const std::string INSERT_INTO_USAGE ="Usage: INSERT INTO users VALUES <id> <name> <age>";
-
-
+    const std::string DELETE_USAGE = "Usage: DELETE FROM users WHERE id = <id> OR DELETE * FROM users";
     std::string toLower(std::string text) {
         std::transform(text.begin(), text.end(),text.begin(),
                     [](unsigned char c) {
@@ -77,7 +76,64 @@ namespace {
 } // namespace 
 
 
+Command parseDeleteCommand(std::istringstream& iss) {
+    std::string starOrFrom;
+    
+    if (!(iss >> starOrFrom)) {
+        return makeInvalidCommand(DELETE_USAGE);
+    }
 
+    if (starOrFrom == "*") {
+        std::string fromKeyword, tableName;
+        
+        if (!(iss >> fromKeyword >> tableName)) {
+            return makeInvalidCommand(DELETE_USAGE);
+        }
+        fromKeyword = toLower(fromKeyword);
+        tableName = toLower(tableName);
+
+        if (fromKeyword != "from" || tableName != "users" || isExtraArguments(iss)) {
+            return makeInvalidCommand(DELETE_USAGE);
+        }
+
+        Command command;
+        command.type = CommandType::Clear;
+
+        return command;
+    } 
+
+    starOrFrom = toLower(starOrFrom);
+
+    if (starOrFrom != "from") {
+        return makeInvalidCommand(DELETE_USAGE);
+    }
+
+    std::string tableName, whereKeyword, idKeyword, equals;
+    int id;
+
+    if (!(iss >> tableName >> whereKeyword >> idKeyword >> equals >> id)) {
+        return makeInvalidCommand(DELETE_USAGE);
+    }
+
+    tableName = toLower(tableName);
+    whereKeyword = toLower(whereKeyword);
+    idKeyword = toLower(idKeyword);
+    equals = toLower(equals);
+
+    if (tableName != "users" || whereKeyword != "where" || idKeyword != "id" || equals != "=") {
+        return makeInvalidCommand(DELETE_USAGE);
+    }
+
+    Command command;
+    command.type = CommandType::Delete;
+    command.id = id;
+
+    if (isExtraArguments(iss)) {
+        return makeInvalidCommand(DELETE_USAGE);
+    }
+
+    return command;
+}
 
 Command parseInsertIntoCommand(std::istringstream& iss) {
     std::string intoKeyword, tableName, valuesKeyword;
@@ -182,13 +238,13 @@ Command parseCommand(const std::string& line) {
         return makeUserCommand(CommandType::Update, iss, UPDATE_USAGE);
     }
 
-    if (action == "delete") {
-        return makeSingleArgumentCommand(CommandType::Delete, iss,DELETE_USAGE);
-    }
+    // if (action == "delete") {
+    //     return makeSingleArgumentCommand(CommandType::Delete, iss,DELETE_USAGE);
+    // }
 
-    if (action == "clear") {
-        return makeZeroArgumentsCommand(CommandType::Clear, iss, NO_ARGUMENTS_USAGE);
-    }
+    // if (action == "clear") {
+    //     return makeZeroArgumentsCommand(CommandType::Clear, iss, NO_ARGUMENTS_USAGE);
+    // }
 
     if (action == "stats") {
         return makeZeroArgumentsCommand(CommandType::Stats, iss, NO_ARGUMENTS_USAGE);
@@ -211,7 +267,7 @@ Command parseCommand(const std::string& line) {
     }
 
 
-
+    // SQL - Like
     if (action == "select") {
        return parseSelectCommand(iss);
     }
@@ -219,6 +275,10 @@ Command parseCommand(const std::string& line) {
     if (action == "insert") {
         return parseInsertIntoCommand(iss);
     }
-
+    if (action == "delete") {
+        return parseDeleteCommand(iss);
+    }
     return makeInvalidCommand(UNKNOWN_COMMAND);
 }
+
+
