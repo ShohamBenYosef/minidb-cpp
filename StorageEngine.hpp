@@ -23,6 +23,7 @@ public:
     bool saveUser(const User& user);
     bool updateUserById(int id, const User& updatedUser);
     bool deleteUserById(int id);
+    bool saveUsersBulk(const std::vector<User>& users);
     std::vector<User> loadAllUsers() const;
     bool findUserByIdIndexed(int id, User& res) const;
     bool findUserByIdLinear(int id, User& res) const;

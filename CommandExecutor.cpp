@@ -4,19 +4,20 @@
 #include <vector>
 
 namespace {
+
     void printHelp() {
-    std::cout << "\nAvailable commands:\n"
-              << "  insert <id> <name> <age>   Insert a new user\n"
-              << "  list                       List all users\n"
-              << "  find <id>                  Find user by ID\n"
-              << "  update <id> <name> <age>   Update user by ID\n"
-              << "  delete <id>                Delete user by ID\n"
-              << "  clear                      Clear the database\n"
-              << "  stats                      Show database statistics\n"
-              << "  benchmark <id>             Compare linear scan vs indexed lookup\n"
-              << "  seed <count>               Generate test users for benchmarking\n"              
-              << "  help                       Show this help message\n"
-              << "  exit                       Exit MiniDB\n";
+        std::cout << "\nAvailable commands:\n"
+                << "  insert <id> <name> <age>   Insert a new user\n"
+                << "  list                       List all users\n"
+                << "  find <id>                  Find user by ID\n"
+                << "  update <id> <name> <age>   Update user by ID\n"
+                << "  delete <id>                Delete user by ID\n"
+                << "  clear                      Clear the database\n"
+                << "  stats                      Show database statistics\n"
+                << "  benchmark <id>             Compare linear scan vs indexed lookup\n"
+                << "  seed <count>               Generate test users for benchmarking\n"              
+                << "  help                       Show this help message\n"
+                << "  exit                       Exit MiniDB\n";
     }
 } // namespace
 
@@ -148,16 +149,17 @@ bool executeCommand(const Command& command, StorageEngine& storage) {
 
             storage.clear();
 
-            for (int i = 0; i <= count; ++i) {
-                std::string name = "User" + std::to_string(i);
-                int age = 18 + (i % 60);
+            std::vector<User> users;
+            users.reserve(count);
 
-                User user = createUser(i,name, age);
-                storage.saveUser(user);
+            for (int i = 0; i <= count; ++i) {
+                std::string name = "User " + std::to_string(i);
+                int age = 18  +(i % 60);
+
+                users.push_back(createUser(i, name, age));
             }
 
-            std::cout << "Seeded " << count << " users." << std::endl;
-            return true;
+            storage.saveUsersBulk(users);
         }
 
         case CommandType::Stats: {

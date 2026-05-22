@@ -106,6 +106,35 @@ bool StorageEngine::updateUserById(int id, const User& updatedUser) {
     return false;
 }
 
+
+bool StorageEngine::saveUsersBulk(const std::vector<User>& users) {
+    std::ofstream file (filename, std::ios::binary | std::ios::app);
+
+    if (!file.is_open()) {
+        throw StorageException(StorageErrorCode::FileOpenFailed, std::string(OPEN_DB_FILE) + filename);
+    }
+
+    for (const User& user: users) {
+        file.write(reinterpret_cast<const char*>(&user), sizeof(User));
+
+        if(!file) {
+            throw StorageException(StorageErrorCode::FileWriteFailed, std::string(WRITE_DB_FILE) + filename);
+        }
+    }
+
+    file.close();
+
+    if (!file) {
+        throw StorageException(StorageErrorCode::Unknown, std::string(CLOSE_DB_FILE)  + filename);
+    }
+
+    buildIndex();
+
+    return true;
+
+}
+
+
 bool StorageEngine::deleteUserById(int id) {
     std::ifstream file(filename, std::ios::binary);
 
