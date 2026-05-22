@@ -13,10 +13,6 @@ MiniDB stores `User` records in a binary file and exposes a small command-line i
 Each record is stored in a fixed-size binary format, which allows the program to calculate record positions inside the file and perform direct access using file offsets.
 
 
-## Core Idea
-
-The database stores records sequentially in a binary file:
-
 ## Tech Stack
 C++
 Binary file I/O
@@ -39,6 +35,18 @@ MiniDB_cpp/
     ├── StorageEngine.cpp
     ├── CommandParser.cpp
     └── CommandExecutor.cpp
+
+## Tests
+
+The project includes basic parser tests using standard C++ `assert`.
+
+Build and run tests:
+
+```bash
+cmake -S . -B build
+cmake --build build
+./build/test_parser
+
 
 ```text
 [User][User][User][User]

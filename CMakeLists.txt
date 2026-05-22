@@ -22,3 +22,18 @@ target_compile_options(minidb PRIVATE
     -Wextra
     -pedantic
 )
+
+add_executable(test_parser
+    tests/test_parser.cpp
+    src/CommandParser.cpp
+)
+
+target_include_directories(test_parser PRIVATE
+    include
+)
+
+target_compile_options(test_parser PRIVATE
+    -Wall
+    -Wextra
+    -pedantic
+)
