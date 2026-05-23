@@ -21,7 +21,7 @@ namespace {
     const std::string SELECT_USAGE ="Usage: SELECT * FROM users WHERE id = <id>";
     const std::string INSERT_INTO_USAGE ="Usage: INSERT INTO users VALUES <id> <name> <age>";
     const std::string DELETE_USAGE = "Usage: DELETE FROM users WHERE id = <id> OR DELETE * FROM users";
-    const std::string UPDATE_USEAGE = "Usage: UPDATE users SET name = <name> age = <age> WHERE id = <id>\n";
+    const std::string UPDATE_USAGE = "Usage: UPDATE users SET name = <name> age = <age> WHERE id = <id>\n";
     std::string toLower(std::string text) {
         std::transform(text.begin(), text.end(),text.begin(),
                     [](unsigned char c) {
@@ -77,82 +77,64 @@ namespace {
 } // namespace 
 
 Command parseUpdateCommand(std::istringstream& iss) {
-    std::string tableName, setKeyword;
-
-    if (!(iss >> tableName >> setKeyword))
-        return makeInvalidCommand(UPDATE_USEAGE);
+    std::string tableName;
+    std::string setKeyword;
+    std::string nameField;
+    std::string nameEquals;
+    std::string newName;
+    std::string ageField;
+    std::string ageEquals;
+    int newAge;
+    std::string whereKeyword;
+    std::string idField;
+    std::string idEquals;
+    int id;
+    
+    if (!(iss >> tableName
+              >> setKeyword
+              >> nameField
+              >> nameEquals
+              >> newName
+              >> ageField
+              >> ageEquals
+              >> newAge
+              >> whereKeyword
+              >> idField
+              >> idEquals
+              >> id)) {
+        return makeInvalidCommand(UPDATE_USAGE);
+    }
 
     tableName = toLower(tableName);
     setKeyword = toLower(setKeyword);
+    nameField = toLower(nameField);
+    ageField = toLower(ageField);
+    whereKeyword = toLower(whereKeyword);
+    idField = toLower(idField);
 
-    if (tableName != "users" || setKeyword != "set")
-        return makeInvalidCommand(UPDATE_USEAGE);
+    if (tableName != "users" ||
+        setKeyword != "set" ||
+        nameField != "name" ||
+        nameEquals != "=" ||
+        ageField != "age" ||
+        ageEquals != "=" ||
+        whereKeyword != "where" ||
+        idField != "id" ||
+        idEquals != "=") {
+        return makeInvalidCommand(UPDATE_USAGE);
+    }
+
+    if (isExtraArguments(iss)) {
+        return makeInvalidCommand(UPDATE_USAGE);
+    }
 
     Command command;
     command.type = CommandType::Update;
-    
-    std::string firstArgToUpdate, firstEqual;
-
-    if (!(iss >> firstArgToUpdate >> firstEqual)) {
-        return makeInvalidCommand(UPDATE_USEAGE);
-    }
-    
-    firstArgToUpdate = toLower(firstArgToUpdate);
-
-    if (firstArgToUpdate == "name" && firstEqual == "="){
-        std::string newName;
-        
-        if(!(iss >> newName)) {
-            return makeInvalidCommand(UPDATE_USEAGE);
-        }
-
-        command.name = newName;
-
-        std::string secondArgToUpdate, secondEquals;
-        int age;
-        if (!(iss >> secondArgToUpdate >> secondEquals >> age)) {
-            return makeInvalidCommand(UPDATE_USEAGE);
-        }
-
-        secondArgToUpdate = toLower(secondArgToUpdate);
-
-        if (secondArgToUpdate != "age" || secondEquals != "=") {
-            return makeInvalidCommand(UPDATE_USEAGE);
-        }
-
-        command.age = age;
-    }
-    
-    if (firstArgToUpdate == "age" && firstEqual == "=") {
-        int age;
-        if (!( iss >> age)) {
-            return makeInvalidCommand(UPDATE_USEAGE);
-        }
-
-        command.age == age;
-    } 
-
-    std::string whereKeword, idKeyword, equals;
-    int id;
-    if (!(iss >> whereKeword >> idKeyword >> equals >> id)) {
-        return makeInvalidCommand(UPDATE_USEAGE);
-    }
-
-    whereKeword = toLower(whereKeword);
-    idKeyword = toLower(idKeyword);
-
-    if (whereKeword != "where" || idKeyword != "id" || equals != "=") {
-                return makeInvalidCommand(UPDATE_USEAGE);
-    }
     command.id = id;
-
-    if (isExtraArguments(iss)) {
-                return makeInvalidCommand(UPDATE_USEAGE);
-            
-    }
+    command.name = newName;
+    command.age = newAge;
 
     return command;
-
 }
 
 Command parseDeleteCommand(std::istringstream& iss) {
