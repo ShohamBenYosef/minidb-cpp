@@ -9,7 +9,7 @@ namespace {
 
 
     const std::string INSERT_USAGE = "Usage: insert <id> <name> <age>";
-    const std::string UPDATE_USAGE = "Usage: update <id> <name> <age>";
+    //const std::string UPDATE_USAGE = "Usage: update <id> <name> <age>";
     const std::string FIND_USAGE = "Usage: find <id>";
     //const std::string DELETE_USAGE = "Usage: delete <id>";
     const std::string BENCHMARK_USAGE = "Usage: benchmark <id>";
@@ -21,6 +21,7 @@ namespace {
     const std::string SELECT_USAGE ="Usage: SELECT * FROM users WHERE id = <id>";
     const std::string INSERT_INTO_USAGE ="Usage: INSERT INTO users VALUES <id> <name> <age>";
     const std::string DELETE_USAGE = "Usage: DELETE FROM users WHERE id = <id> OR DELETE * FROM users";
+    const std::string UPDATE_USEAGE = "Usage: UPDATE users SET name = <name> age = <age> WHERE id = <id>\n";
     std::string toLower(std::string text) {
         std::transform(text.begin(), text.end(),text.begin(),
                     [](unsigned char c) {
@@ -75,6 +76,84 @@ namespace {
 
 } // namespace 
 
+Command parseUpdateCommand(std::istringstream& iss) {
+    std::string tableName, setKeyword;
+
+    if (!(iss >> tableName >> setKeyword))
+        return makeInvalidCommand(UPDATE_USEAGE);
+
+    tableName = toLower(tableName);
+    setKeyword = toLower(setKeyword);
+
+    if (tableName != "users" || setKeyword != "set")
+        return makeInvalidCommand(UPDATE_USEAGE);
+
+    Command command;
+    command.type = CommandType::Update;
+    
+    std::string firstArgToUpdate, firstEqual;
+
+    if (!(iss >> firstArgToUpdate >> firstEqual)) {
+        return makeInvalidCommand(UPDATE_USEAGE);
+    }
+    
+    firstArgToUpdate = toLower(firstArgToUpdate);
+
+    if (firstArgToUpdate == "name" && firstEqual == "="){
+        std::string newName;
+        
+        if(!(iss >> newName)) {
+            return makeInvalidCommand(UPDATE_USEAGE);
+        }
+
+        command.name = newName;
+
+        std::string secondArgToUpdate, secondEquals;
+        int age;
+        if (!(iss >> secondArgToUpdate >> secondEquals >> age)) {
+            return makeInvalidCommand(UPDATE_USEAGE);
+        }
+
+        secondArgToUpdate = toLower(secondArgToUpdate);
+
+        if (secondArgToUpdate != "age" || secondEquals != "=") {
+            return makeInvalidCommand(UPDATE_USEAGE);
+        }
+
+        command.age = age;
+    }
+    
+    if (firstArgToUpdate == "age" && firstEqual == "=") {
+        int age;
+        if (!( iss >> age)) {
+            return makeInvalidCommand(UPDATE_USEAGE);
+        }
+
+        command.age == age;
+    } 
+
+    std::string whereKeword, idKeyword, equals;
+    int id;
+    if (!(iss >> whereKeword >> idKeyword >> equals >> id)) {
+        return makeInvalidCommand(UPDATE_USEAGE);
+    }
+
+    whereKeword = toLower(whereKeword);
+    idKeyword = toLower(idKeyword);
+
+    if (whereKeword != "where" || idKeyword != "id" || equals != "=") {
+                return makeInvalidCommand(UPDATE_USEAGE);
+    }
+    command.id = id;
+
+    if (isExtraArguments(iss)) {
+                return makeInvalidCommand(UPDATE_USEAGE);
+            
+    }
+
+    return command;
+
+}
 
 Command parseDeleteCommand(std::istringstream& iss) {
     std::string starOrFrom;
@@ -118,7 +197,6 @@ Command parseDeleteCommand(std::istringstream& iss) {
     tableName = toLower(tableName);
     whereKeyword = toLower(whereKeyword);
     idKeyword = toLower(idKeyword);
-    equals = toLower(equals);
 
     if (tableName != "users" || whereKeyword != "where" || idKeyword != "id" || equals != "=") {
         return makeInvalidCommand(DELETE_USAGE);
@@ -234,9 +312,9 @@ Command parseCommand(const std::string& line) {
     //     return makeSingleArgumentCommand(CommandType::Find, iss, FIND_USAGE);
     // }
     
-    if (action == "update") {
-        return makeUserCommand(CommandType::Update, iss, UPDATE_USAGE);
-    }
+    // if (action == "update") {
+    //     return makeUserCommand(CommandType::Update, iss, UPDATE_USAGE);
+    // }
 
     // if (action == "delete") {
     //     return makeSingleArgumentCommand(CommandType::Delete, iss,DELETE_USAGE);
@@ -277,6 +355,10 @@ Command parseCommand(const std::string& line) {
     }
     if (action == "delete") {
         return parseDeleteCommand(iss);
+    }
+
+    if (action == "update") {
+        return parseUpdateCommand(iss);
     }
     return makeInvalidCommand(UNKNOWN_COMMAND);
 }
