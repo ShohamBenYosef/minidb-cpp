@@ -10,11 +10,39 @@
 #include "StorageErrors.hpp"
 
 
+namespace {
+    // validation variables
+    constexpr int MIN_USER_ID = 1;
+    constexpr int MIN_USER_AGE = 0;
+    constexpr int MAX_USER_AGE = 120;
+    constexpr std::size_t MAX_USER_NAME_LENGTH = 31;
+
+    // validation function: validate User's fields.
+    void validateUserFields(int id, const std::string& name, int age) {
+        // id
+        if (id < MIN_USER_ID) {
+            throw StorageException(StorageErrorCode::ValidationFailed,INVALID_USER_ID);
+        }
+        // name
+        if (name.empty() || name.length() > MAX_USER_NAME_LENGTH) {
+            throw StorageException(StorageErrorCode::ValidationFailed,INVALID_USER_NAME);
+        }
+        // age
+        if (age < MIN_USER_AGE || age > MAX_USER_AGE) {
+            throw StorageException(StorageErrorCode::ValidationFailed,INVALID_USER_AGE);
+        }
+    }
+
+} // namespace
+
+
+
 StorageEngine::StorageEngine(const std::string& filename)
     : filename(filename) {
         buildIndex();
 }
 
+// Build index file for find index faster.
 void StorageEngine::buildIndex() {
     index.clear();
 
@@ -40,8 +68,9 @@ void StorageEngine::buildIndex() {
     }
 }
 
-
+// Save User after building it (another func).
 bool StorageEngine::saveUser(const User& user) {
+
     std::ofstream file(filename, std::ios::binary | std::ios::app);
 
     if (!file.is_open())
@@ -63,6 +92,15 @@ bool StorageEngine::saveUser(const User& user) {
 }
 
 bool StorageEngine::updateUserById(int id, const User& updatedUser) {
+
+    if (id < MIN_USER_ID) {
+        throw StorageException(StorageErrorCode::ValidationFailed,INVALID_USER_ID);
+    }
+
+    if (updatedUser.id != id) {
+        throw StorageException(StorageErrorCode::ValidationFailed,"Updated user id must be equal to target id.");
+    }
+
     std::fstream file(filename, std::ios::binary | std::ios::in | std::ios::out);
 
     if (!file.is_open()) {
@@ -71,7 +109,9 @@ bool StorageEngine::updateUserById(int id, const User& updatedUser) {
 
     User user;
 
+    // search for user's id.
     while (file.read(reinterpret_cast<char*>(&user), sizeof(User))) {
+        
         if (user.id == id) {
             // Move the write cursor back to the beginning of this record.
             file.seekp(-static_cast<std::streamoff>(sizeof(User)), std::ios::cur);
@@ -93,7 +133,7 @@ bool StorageEngine::updateUserById(int id, const User& updatedUser) {
             }
             
             buildIndex();
-            
+        
             return true;
         }
     }
@@ -102,11 +142,12 @@ bool StorageEngine::updateUserById(int id, const User& updatedUser) {
         throw StorageException(StorageErrorCode::FileReadFailed, std::string(READ_DB_FILE) + filename);
     }
 
-    // User not found is not a storage error.
-    return false;
+    
+    return false; // User not found is not a storage error.
 }
 
-
+// Easy function for saving bulk of users.
+// save vector of user instead of one by one.
 bool StorageEngine::saveUsersBulk(const std::vector<User>& users) {
     std::ofstream file (filename, std::ios::binary | std::ios::app);
 
@@ -136,6 +177,9 @@ bool StorageEngine::saveUsersBulk(const std::vector<User>& users) {
 
 
 bool StorageEngine::deleteUserById(int id) {
+    if (id < MIN_USER_ID) {
+        throw StorageException(StorageErrorCode::ValidationFailed,INVALID_USER_ID);
+    }
     std::ifstream file(filename, std::ios::binary);
 
     if (!file.is_open()) {
@@ -152,6 +196,7 @@ bool StorageEngine::deleteUserById(int id) {
     User user;
     bool found = false;
 
+    // search by id
     while (file.read(reinterpret_cast<char*>(&user), sizeof(User))) {
         if (user.id == id) {
             found = true;
@@ -223,6 +268,11 @@ std::vector<User> StorageEngine::loadAllUsers() const {
 }
 
 bool StorageEngine::findUserByIdIndexed(int id, User& res) const {
+    
+    if (id < MIN_USER_ID) {
+        throw StorageException(StorageErrorCode::ValidationFailed,INVALID_USER_ID);
+    }
+    
     auto it = index.find(id);
 
     if (it == index.end()) { // run on all records and dont find this id.
@@ -287,6 +337,8 @@ bool StorageEngine::clear() {
 }
 
 User createUser(int id, const std::string& name, int age) {
+    validateUserFields(id, name, age);
+    
     User newUser;
     newUser.id = id;
     newUser.age = age;
