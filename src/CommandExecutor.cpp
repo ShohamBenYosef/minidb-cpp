@@ -1,24 +1,33 @@
 #include "CommandExecutor.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <vector>
 
 namespace {
 
     void printHelp() {
-        std::cout << "\nAvailable commands:\n"
-                << "  insert <id> <name> <age>   Insert a new user\n"
-                << "  list                       List all users\n"
-                << "  find <id>                  Find user by ID\n"
-                << "  update <id> <name> <age>   Update user by ID\n"
-                << "  delete <id>                Delete user by ID\n"
-                << "  clear                      Clear the database\n"
-                << "  stats                      Show database statistics\n"
-                << "  benchmark <id>             Compare linear scan vs indexed lookup\n"
-                << "  seed <count>               Generate test users for benchmarking\n"              
-                << "  help                       Show this help message\n"
-                << "  exit                       Exit MiniDB\n";
+        std::cout << "\nSupport commands:\n"
+                << "  INSERT INTO users VALUES <id> <name> <age>\n"
+                << "  SELECT * FROM users\n"
+                << "  SELECT * FROM users WHERE id = <id>\n"
+                << "  UPDATE users SET name = <name> age = <age> WHERE id = <id>\n"
+                << "  DELETE FROM users WHERE id = <id>\n"
+                << "  DELETE * FROM users\n"
+                << "  stats\n"
+                << "  benchmark <id>\n"
+                << "  seed <count>\n"
+                << "  help\n"
+                << "  exit\n";
     }
+    
+    void printUser(const User& user) {
+        std::cout << "ID: " << user.id
+                  << ", Name: " << user.name
+                  << ", Age: " << user.age
+                  << std::endl;
+    }
+    
 } // namespace
 
 
@@ -133,8 +142,8 @@ bool executeCommand(const Command& command, StorageEngine& storage) {
             auto indexedDuration = std::chrono::duration_cast<std::chrono::microseconds>(indexedEnd - indexedStart).count();
 
             std::cout << "\nBenchmark result for id " <<command.id << std::endl
-                    << "Linear search: " << linearDuration <<" ms" << std::endl
-                    << "Indexed search: " << indexedDuration << " ms" << std::endl;
+                    << "Linear search: " << linearDuration << " microseconds" << std::endl
+                    << "Indexed search: " << indexedDuration << " microseconds" << std::endl;
                 
             return true;
         }
@@ -152,14 +161,17 @@ bool executeCommand(const Command& command, StorageEngine& storage) {
             std::vector<User> users;
             users.reserve(count);
 
-            for (int i = 0; i <= count; ++i) {
-                std::string name = "User " + std::to_string(i);
+            for (int i = 1; i <= count; ++i) {
+                std::string name = "User" + std::to_string(i);
                 int age = 18  +(i % 60);
 
                 users.push_back(createUser(i, name, age));
             }
 
             storage.saveUsersBulk(users);
+            
+            std::cout << "Seed " << count << " users" << std::endl;
+            return true;
         }
 
         case CommandType::Stats: {
@@ -185,4 +197,8 @@ bool executeCommand(const Command& command, StorageEngine& storage) {
             return true;
         }
     }
+
+
+
+
 }

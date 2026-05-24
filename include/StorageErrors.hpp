@@ -4,9 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-/*
-*
-*/
+
 enum class StorageErrorCode {
     FileOpenFailed,
     FileReadFailed,
@@ -19,13 +17,13 @@ enum class StorageErrorCode {
     Unknown
 };
 
+
 /*
 * Reusable error message fragments.
 */
-inline constexpr const char* OPEN_DB_FILE =
-    "Could not open database file: ";
+inline constexpr const char* OPEN_DB_FILE = "Could not open database file: ";
 
-inline constexpr const char* OPEN_TEMP_FILE ="Could not open temporary database file: ";
+inline constexpr const char* OPEN_TEMP_FILE = "Could not open temporary database file: ";
 
 inline constexpr const char* WRITE_DB_FILE = "Could not write to database file: ";
 
@@ -47,6 +45,8 @@ inline constexpr const char* INVALID_USER_NAME = "User name must be between 1 an
 
 inline constexpr const char* INVALID_USER_AGE = "User age must be between 0 and 120.";
     
+
+
 inline std::string errorCodeToString(StorageErrorCode code) {
     switch (code) {
         case StorageErrorCode::FileOpenFailed:
@@ -79,6 +79,7 @@ inline std::string errorCodeToString(StorageErrorCode code) {
     }
 }
 
+
 class StorageException : public std::runtime_error {
 private:
     StorageErrorCode code;
@@ -93,5 +94,7 @@ public:
         return code;
     }
 };
+
+
 
 #endif

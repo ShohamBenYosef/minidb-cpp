@@ -1,16 +1,23 @@
 #ifndef STORAGE_ENGINE_HPP
 #define STORAGE_ENGINE_HPP
 
-#include <string>
-#include <vector>
-#include <unordered_map>
+
+#include <cstddef>
 #include <ios>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+
+
+inline constexpr std::size_t USER_NAME_SIZE = 32;
 
 struct User {
     int id;
-    char name[32];
+    char name[USER_NAME_SIZE];
     int age;
 };
+
 
 class StorageEngine {
 private:
@@ -36,7 +43,6 @@ public:
 };
 
 User createUser(int id, const std::string& name, int age);
-void printUser(const User& user);
 
 
 

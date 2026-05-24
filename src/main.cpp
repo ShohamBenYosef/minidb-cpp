@@ -1,10 +1,11 @@
+#include <exception>
 #include <iostream>
 #include <string>
 
-#include "StorageErrors.hpp"
+#include "CommandParser.hpp"
 #include "CommandExecutor.hpp"
-
-
+#include "StorageEngine.hpp"
+#include "StorageErrors.hpp"
 
 
 int main() {
@@ -17,7 +18,9 @@ int main() {
         std::string line;
 
         std::cout << "\nminidb$ ";
-        std::getline(std::cin, line);
+        if (!std::getline(std::cin, line)) {
+            std::cout << "\nExit." << std::endl;
+        }
 
         Command command = parseCommand(line);
 
@@ -26,9 +29,9 @@ int main() {
                 break;
             }
         } catch (const StorageException& ex) {
-            std::cout << "Storage errror: " << ex.what() << '\n';
+            std::cout << "Storage errror: " << ex.what() << std::endl;
         } catch (const std::exception& ex) {
-            std::cout << "Unexpected error: " << ex.what() << '\n';
+            std::cout << "Unexpected error: " << ex.what() << std::endl;
         }
         
     }

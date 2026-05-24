@@ -1,13 +1,12 @@
-#include <iostream>
-#include <cstring>
-#include <fstream>
-#include <cstdio>
-#include <vector>
-#include <cstddef>
-#include <chrono>
-
 #include "StorageEngine.hpp"
 #include "StorageErrors.hpp"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <vector>
 
 
 namespace {
@@ -42,7 +41,7 @@ StorageEngine::StorageEngine(const std::string& filename)
         buildIndex();
 }
 
-// Build index file for find index faster.
+// Build an in memory index from user id to binary file offset.
 void StorageEngine::buildIndex() {
     index.clear();
 
@@ -101,49 +100,37 @@ bool StorageEngine::updateUserById(int id, const User& updatedUser) {
         throw StorageException(StorageErrorCode::ValidationFailed,"Updated user id must be equal to target id.");
     }
 
+    auto it = index.find(id);
+
+    if (it == index.end()) {
+        return false;
+    }
+
     std::fstream file(filename, std::ios::binary | std::ios::in | std::ios::out);
 
     if (!file.is_open()) {
         throw StorageException(StorageErrorCode::FileOpenFailed, std::string(OPEN_DB_FILE) + filename);
     }
 
-    User user;
+    file.seekp(it->second);
 
-    // search for user's id.
-    while (file.read(reinterpret_cast<char*>(&user), sizeof(User))) {
-        
-        if (user.id == id) {
-            // Move the write cursor back to the beginning of this record.
-            file.seekp(-static_cast<std::streamoff>(sizeof(User)), std::ios::cur);
-
-            if (!file) {
-                throw StorageException(StorageErrorCode::FileSeekFailed, std::string(SEEK_DB_FILE) + filename);
-            }
-
-            file.write(reinterpret_cast<const char*>(&updatedUser), sizeof(User));
-
-            if (!file) {
-                throw StorageException(StorageErrorCode::FileWriteFailed, std::string(UPDATE_DB_FILE) + filename);
-            }
-
-            file.close();
-
-            if (!file) {
-                throw StorageException(StorageErrorCode::FileWriteFailed, std::string(UPDATE_DB_FILE) + filename);
-            }
-            
-            buildIndex();
-        
-            return true;
-        }
+    if(!file) {
+        throw StorageException(StorageErrorCode::FileSeekFailed, std::string(SEEK_DB_FILE) + filename);
     }
 
-    if (!file.eof()) {
-        throw StorageException(StorageErrorCode::FileReadFailed, std::string(READ_DB_FILE) + filename);
+    file.write(reinterpret_cast<const char*>(&updatedUser), sizeof(User));
+
+    if (!file) {
+        throw StorageException(StorageErrorCode::FileWriteFailed, std::string(UPDATE_DB_FILE) + filename);
     }
 
-    
-    return false; // User not found is not a storage error.
+    file.close();
+
+    if(!file) {
+        throw StorageException(StorageErrorCode::FileWriteFailed, std::string(CLOSE_DB_FILE) + filename);
+    }
+
+    return true;
 }
 
 // Easy function for saving bulk of users.
@@ -166,7 +153,7 @@ bool StorageEngine::saveUsersBulk(const std::vector<User>& users) {
     file.close();
 
     if (!file) {
-        throw StorageException(StorageErrorCode::Unknown, std::string(CLOSE_DB_FILE)  + filename);
+        throw StorageException(StorageErrorCode::FileWriteFailed, std::string(CLOSE_DB_FILE) + filename);
     }
 
     buildIndex();
@@ -302,6 +289,11 @@ bool StorageEngine::findUserByIdIndexed(int id, User& res) const {
 }
 
 bool StorageEngine::findUserByIdLinear(int id, User& res) const {
+    
+    if (id < MIN_USER_ID) {
+        throw StorageException(StorageErrorCode::ValidationFailed, INVALID_USER_ID);
+    }
+    
     std::ifstream file(filename, std::ios::binary);
 
     if(!file.is_open()) {
@@ -318,8 +310,8 @@ bool StorageEngine::findUserByIdLinear(int id, User& res) const {
     }
 
     if (!file.eof()) {
-        throw StorageException(StorageErrorCode::FileReadFailed, std::string(READ_DB_FILE) + filename);
-    }
+        throw StorageException(StorageErrorCode::FileOpenFailed, std::string(OPEN_DB_FILE) + filename);
+        }
 
     return false;
 }
@@ -349,12 +341,7 @@ User createUser(int id, const std::string& name, int age) {
     return newUser;
 }
 
-void printUser(const User& user) {
-    std::cout << "ID: " << user.id
-              << ", Name: " << user.name
-              << ", Age: " << user.age
-              << std::endl;
-}
+
 
 std::size_t StorageEngine::indexSize() const {
     return index.size();
